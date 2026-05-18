@@ -92,7 +92,23 @@ def _is_valid_domain(domain: str) -> bool:
 
 
 def _contains_placeholder_line(body: str) -> bool:
-    return any(PLACEHOLDER_LINE_PATTERN.fullmatch(line) for line in body.splitlines())
+    substantive_lines: list[str] = []
+    placeholder_lines: list[str] = []
+    in_fenced_code_block = False
+
+    for line in body.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_fenced_code_block = not in_fenced_code_block
+            continue
+        if in_fenced_code_block or not stripped:
+            continue
+        if PLACEHOLDER_LINE_PATTERN.fullmatch(line):
+            placeholder_lines.append(stripped)
+        else:
+            substantive_lines.append(stripped)
+
+    return bool(placeholder_lines) and not substantive_lines
 
 
 def validate_repository(repo_root: Path) -> dict[Path, list[str]]:

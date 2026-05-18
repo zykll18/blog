@@ -178,6 +178,62 @@ class ValidateHashnodePostsTests(unittest.TestCase):
             self.assertNotIn("body contains placeholder text", errors)
             self.assertEqual(errors, [])
 
+    def test_fenced_code_block_with_template_syntax_does_not_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "fenced-code-example.md",
+                """
+                ---
+                title: Fenced Code Example
+                slug: fenced-code-example
+                tags: python
+                domain: example.hashnode.dev
+                ---
+
+                The template syntax below is part of the article example.
+
+                ```jinja
+                {{ user.name }}
+                ```
+
+                Continue with the explanation after the snippet.
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertNotIn("body contains placeholder text", errors)
+            self.assertEqual(errors, [])
+
+    def test_standalone_example_line_with_surrounding_explanation_does_not_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "standalone-example.md",
+                """
+                ---
+                title: Standalone Example Line
+                slug: standalone-example-line
+                tags: python
+                domain: example.hashnode.dev
+                ---
+
+                The next line is an example token for readers to customize:
+
+                {{ project.slug }}
+
+                Replace it in your own app configuration and keep reading.
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertNotIn("body contains placeholder text", errors)
+            self.assertEqual(errors, [])
+
     def test_repository_validation_only_scans_root_markdown_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
