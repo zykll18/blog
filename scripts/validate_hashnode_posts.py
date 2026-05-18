@@ -30,6 +30,8 @@ TEMPLATE_FRONTMATTER_PLACEHOLDERS = {
 
 
 def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
+    text = text.removeprefix("\ufeff")
+
     if not text.startswith("---\n"):
         raise ValueError("frontmatter must start the file")
 

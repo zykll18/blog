@@ -36,6 +36,33 @@ class ValidateHashnodePostsTests(unittest.TestCase):
 
             self.assertEqual(errors, [])
 
+    def test_bom_prefixed_valid_post_passes_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = repo / "bom-valid-post.md"
+            post.write_text(
+                "\ufeff"
+                + textwrap.dedent(
+                    """
+                    ---
+                    title: BOM Valid Title
+                    slug: bom-valid-title
+                    tags: python, testing
+                    domain: example.hashnode.dev
+                    ---
+
+                    # BOM Valid Title
+
+                    This is a finished post body.
+                    """
+                ).lstrip(),
+                encoding="utf-8",
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertEqual(errors, [])
+
     def test_missing_required_frontmatter_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
