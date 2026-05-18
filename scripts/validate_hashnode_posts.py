@@ -89,8 +89,11 @@ def validate_post_file(path: Path) -> list[str]:
 
     if not body:
         errors.append("post body must not be empty")
-    elif _contains_placeholder_line(body):
-        errors.append("body contains placeholder text")
+    else:
+        if _has_unclosed_fenced_code_block(body):
+            errors.append("markdown contains an unclosed fenced code block")
+        if _contains_placeholder_line(body):
+            errors.append("body contains placeholder text")
 
     return errors
 
@@ -160,6 +163,21 @@ def _contains_placeholder_line(body: str) -> bool:
         previous_line_blank = False
 
     return bool(template_placeholder_lines) and not substantive_lines
+
+
+def _has_unclosed_fenced_code_block(body: str) -> bool:
+    active_fence: tuple[str, int] | None = None
+
+    for line in body.splitlines():
+        stripped = line.strip()
+        fence = _get_fence_marker(stripped)
+        if active_fence is None and fence is not None:
+            active_fence = fence
+            continue
+        if active_fence is not None and _is_closing_fence(stripped, active_fence):
+            active_fence = None
+
+    return active_fence is not None
 
 
 def _is_indented_code_line(

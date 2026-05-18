@@ -390,6 +390,31 @@ class ValidateHashnodePostsTests(unittest.TestCase):
             self.assertNotIn("body contains placeholder text", errors)
             self.assertEqual(errors, [])
 
+    def test_unclosed_fenced_code_block_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "unclosed-fence.md",
+                """
+                ---
+                title: Unclosed Fence
+                slug: unclosed-fence
+                tags: python
+                domain: example.hashnode.dev
+                ---
+
+                This post contains an unterminated fenced block.
+
+                ```python
+                print("hello")
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertIn("markdown contains an unclosed fenced code block", errors)
+
     def test_longer_backtick_fence_not_closed_by_shorter_backticks(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
