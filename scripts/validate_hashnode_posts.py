@@ -109,11 +109,13 @@ def _contains_placeholder_line(body: str) -> bool:
     for line in body.splitlines():
         stripped = line.strip()
         fence = _get_fence_marker(stripped)
-        if fence is not None and (
-            active_fence is None
-            or (fence[0] == active_fence[0] and fence[1] >= active_fence[1])
-        ):
-            active_fence = None if active_fence == fence else fence
+        if active_fence is None and fence is not None:
+            active_fence = fence
+            in_indented_code_block = False
+            previous_line_blank = False
+            continue
+        if active_fence is not None and fence is not None and fence[0] == active_fence[0] and fence[1] >= active_fence[1]:
+            active_fence = None
             in_indented_code_block = False
             previous_line_blank = False
             continue

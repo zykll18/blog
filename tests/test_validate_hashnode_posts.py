@@ -324,6 +324,34 @@ class ValidateHashnodePostsTests(unittest.TestCase):
             self.assertNotIn("body contains placeholder text", errors)
             self.assertEqual(errors, [])
 
+    def test_longer_matching_closing_fence_closes_block_and_later_placeholder_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "longer-closing-fence.md",
+                """
+                ---
+                title: Longer Closing Fence
+                slug: longer-closing-fence
+                tags: python
+                domain: example.hashnode.dev
+                ---
+
+                The code sample below closes with a longer backtick run:
+
+                ```md
+                {{ user.name }}
+                ````
+
+                [[fill-me]]
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertIn("body contains placeholder text", errors)
+
     def test_backtick_fenced_block_with_literal_tilde_fence_does_not_fail(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
