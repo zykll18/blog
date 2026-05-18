@@ -367,6 +367,43 @@ class ValidateHashnodePostsTests(unittest.TestCase):
             self.assertIn("frontmatter contains template placeholder: slug", errors)
             self.assertIn("frontmatter contains template placeholder: domain", errors)
 
+    def test_ignore_post_fixture_with_placeholder_domain_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "ignored-sample.md",
+                """
+                ---
+                title: Sample Opinion Post
+                slug: sample-opinion-post
+                tags: engineering, writing
+                domain: your-publication.hashnode.dev
+                subtitle: A safe root-level sample for validator and integration checks
+                ignorePost: true
+                hideFromHashnodeCommunity: true
+                disableComments: false
+                enableToc: true
+                ---
+
+                # Sample Opinion Post
+
+                This file is intentionally ignored by Hashnode publishing.
+
+                ## Why it exists
+
+                It proves that root-level article files are shaped correctly for the validator and the GitHub integration.
+
+                ## How to use it
+
+                Replace it with a real article or keep it as a validator fixture. Leave `ignorePost: true` in place unless you intentionally want it published.
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertEqual(errors, [])
+
     def test_legitimate_replace_with_prose_does_not_fail(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)

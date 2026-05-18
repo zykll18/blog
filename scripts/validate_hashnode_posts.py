@@ -233,12 +233,19 @@ def _is_scaffold_line(stripped_line: str) -> bool:
 
 
 def _validate_template_frontmatter(frontmatter: dict[str, str]) -> list[str]:
+    if _is_true(frontmatter.get("ignorePost", "")):
+        return []
+
     errors: list[str] = []
     for key, placeholder in TEMPLATE_FRONTMATTER_PLACEHOLDERS.items():
         value = frontmatter.get(key, "")
         if value.lower() == placeholder:
             errors.append(f"frontmatter contains template placeholder: {key}")
     return errors
+
+
+def _is_true(value: str) -> bool:
+    return value.strip().lower() == "true"
 
 
 def validate_repository(repo_root: Path) -> dict[Path, list[str]]:
