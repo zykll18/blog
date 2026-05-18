@@ -106,7 +106,7 @@ class ValidateHashnodePostsTests(unittest.TestCase):
             repo = Path(tmp)
 
             for index, domain in enumerate(
-                ("example..hashnode.dev", "-bad.hashnode.dev", "bad-.hashnode.dev"),
+                ("example..hashnode.dev", "-bad.hashnode.dev", "bad-.hashnode.dev", "127.0.0.1"),
                 start=1,
             ):
                 post = self.write_file(
@@ -251,6 +251,36 @@ class ValidateHashnodePostsTests(unittest.TestCase):
                 ```
 
                 Continue with the explanation after the snippet.
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertNotIn("body contains placeholder text", errors)
+            self.assertEqual(errors, [])
+
+    def test_tilde_fenced_code_block_with_placeholder_tokens_does_not_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "tilde-fenced-example.md",
+                """
+                ---
+                title: Tilde Fenced Example
+                slug: tilde-fenced-example
+                tags: python
+                domain: example.hashnode.dev
+                ---
+
+                The example below uses tilde fences:
+
+                ~~~jinja
+                [[fill-me]]
+                {{ user.name }}
+                ~~~
+
+                The post should not fail because the tokens are part of code.
                 """,
             )
 

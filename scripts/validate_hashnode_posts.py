@@ -88,6 +88,8 @@ def _is_valid_domain(domain: str) -> bool:
     labels = domain.split(".")
     if len(labels) < 2:
         return False
+    if all(label.isdigit() for label in labels):
+        return False
 
     return all(HOSTNAME_LABEL_PATTERN.fullmatch(label) for label in labels)
 
@@ -101,7 +103,7 @@ def _contains_placeholder_line(body: str) -> bool:
 
     for line in body.splitlines():
         stripped = line.strip()
-        if stripped.startswith("```"):
+        if _is_fence_line(stripped):
             in_fenced_code_block = not in_fenced_code_block
             in_indented_code_block = False
             previous_line_blank = False
@@ -136,6 +138,10 @@ def _is_indented_code_line(
     return (previous_line_blank or in_indented_code_block) and (
         line.startswith("    ") or line.startswith("\t")
     )
+
+
+def _is_fence_line(stripped_line: str) -> bool:
+    return stripped_line.startswith("```") or stripped_line.startswith("~~~")
 
 
 def validate_repository(repo_root: Path) -> dict[Path, list[str]]:
