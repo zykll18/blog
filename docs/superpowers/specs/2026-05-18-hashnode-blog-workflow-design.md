@@ -1,7 +1,7 @@
 # Hashnode Blog Workflow Design
 
 Date: 2026-05-18
-Status: Approved for spec drafting, pending user review
+Status: Approved
 
 ## Goal
 
@@ -89,7 +89,7 @@ The repository should act as a content source repository, not as a full blog eng
 
 Planned structure:
 
-- root-level `*.md` files for publishable Hashnode posts
+- root-level article `*.md` files intended for Hashnode publishing
 - `templates/` for reusable article templates
 - `scripts/` for helper utilities such as validation
 - `.github/workflows/` for validation-only workflows
@@ -99,6 +99,7 @@ Planned structure:
 Implementation note:
 
 - current Hashnode GitHub publishing expects Markdown posts in the repository root rather than a nested `posts/` directory
+- root-level Markdown should therefore be treated cautiously and reserved for article files that are intentionally prepared for Hashnode
 
 ## Content Model
 
