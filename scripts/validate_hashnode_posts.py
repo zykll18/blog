@@ -5,8 +5,11 @@ from pathlib import Path
 REQUIRED_KEYS = ("title", "slug", "tags", "domain")
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 TAG_PATTERN = re.compile(r"^[a-z0-9-]+$")
-DOMAIN_PATTERN = re.compile(r"^(?!https?://)[a-z0-9.-]+\.[a-z]{2,}$")
-PLACEHOLDER_PATTERN = re.compile(r"\[\[fill-me\]\]|\{\{.+?\}\}|<replace.+?>", re.IGNORECASE)
+HOSTNAME_LABEL_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
+PLACEHOLDER_LINE_PATTERN = re.compile(
+    r"^\s*(?:\[\[fill-me\]\]|\{\{.+?\}\}|<replace.+?>)\s*$",
+    re.IGNORECASE,
+)
 
 
 def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
@@ -62,12 +65,12 @@ def validate_post_file(path: Path) -> list[str]:
             errors.append(f"invalid tag slugs: {', '.join(invalid_tags)}")
 
     domain = frontmatter.get("domain", "")
-    if domain and not DOMAIN_PATTERN.fullmatch(domain):
+    if domain and not _is_valid_domain(domain):
         errors.append("domain must be a bare hostname such as example.hashnode.dev")
 
     if not body:
         errors.append("post body must not be empty")
-    elif PLACEHOLDER_PATTERN.search(body):
+    elif _contains_placeholder_line(body):
         errors.append("body contains placeholder text")
 
     return errors
@@ -75,6 +78,21 @@ def validate_post_file(path: Path) -> list[str]:
 
 def iter_root_markdown_files(repo_root: Path) -> list[Path]:
     return sorted(path for path in repo_root.glob("*.md") if path.name != "README.md")
+
+
+def _is_valid_domain(domain: str) -> bool:
+    if "://" in domain:
+        return False
+
+    labels = domain.split(".")
+    if len(labels) < 2:
+        return False
+
+    return all(HOSTNAME_LABEL_PATTERN.fullmatch(label) for label in labels)
+
+
+def _contains_placeholder_line(body: str) -> bool:
+    return any(PLACEHOLDER_LINE_PATTERN.fullmatch(line) for line in body.splitlines())
 
 
 def validate_repository(repo_root: Path) -> dict[Path, list[str]]:
