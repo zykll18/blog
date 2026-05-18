@@ -84,11 +84,15 @@ def iter_root_markdown_files(repo_root: Path) -> list[Path]:
 def _is_valid_domain(domain: str) -> bool:
     if "://" in domain:
         return False
+    if len(domain) > 253:
+        return False
 
     labels = domain.split(".")
     if len(labels) < 2:
         return False
     if all(label.isdigit() for label in labels):
+        return False
+    if any(len(label) > 63 for label in labels):
         return False
 
     return all(HOSTNAME_LABEL_PATTERN.fullmatch(label) for label in labels)
@@ -97,18 +101,19 @@ def _is_valid_domain(domain: str) -> bool:
 def _contains_placeholder_line(body: str) -> bool:
     substantive_lines: list[str] = []
     template_placeholder_lines: list[str] = []
-    in_fenced_code_block = False
+    active_fence: str | None = None
     in_indented_code_block = False
     previous_line_blank = True
 
     for line in body.splitlines():
         stripped = line.strip()
-        if _is_fence_line(stripped):
-            in_fenced_code_block = not in_fenced_code_block
+        fence = _get_fence_marker(stripped)
+        if fence is not None and (active_fence is None or fence == active_fence):
+            active_fence = None if active_fence == fence else fence
             in_indented_code_block = False
             previous_line_blank = False
             continue
-        if in_fenced_code_block:
+        if active_fence is not None:
             previous_line_blank = not stripped
             continue
         if _is_indented_code_line(line, previous_line_blank, in_indented_code_block):
@@ -140,8 +145,12 @@ def _is_indented_code_line(
     )
 
 
-def _is_fence_line(stripped_line: str) -> bool:
-    return stripped_line.startswith("```") or stripped_line.startswith("~~~")
+def _get_fence_marker(stripped_line: str) -> str | None:
+    if stripped_line.startswith("```"):
+        return "```"
+    if stripped_line.startswith("~~~"):
+        return "~~~"
+    return None
 
 
 def validate_repository(repo_root: Path) -> dict[Path, list[str]]:

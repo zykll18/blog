@@ -104,9 +104,18 @@ class ValidateHashnodePostsTests(unittest.TestCase):
     def test_invalid_domain_hostname_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
+            overlong_label = "a" * 64
+            overlong_hostname = ".".join(["a" * 63, "b" * 63, "c" * 63, "d" * 62, "com"])
 
             for index, domain in enumerate(
-                ("example..hashnode.dev", "-bad.hashnode.dev", "bad-.hashnode.dev", "127.0.0.1"),
+                (
+                    "example..hashnode.dev",
+                    "-bad.hashnode.dev",
+                    "bad-.hashnode.dev",
+                    "127.0.0.1",
+                    f"{overlong_label}.hashnode.dev",
+                    overlong_hostname,
+                ),
                 start=1,
             ):
                 post = self.write_file(
@@ -251,6 +260,36 @@ class ValidateHashnodePostsTests(unittest.TestCase):
                 ```
 
                 Continue with the explanation after the snippet.
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertNotIn("body contains placeholder text", errors)
+            self.assertEqual(errors, [])
+
+    def test_backtick_fenced_block_with_literal_tilde_fence_does_not_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "mixed-fence-example.md",
+                """
+                ---
+                title: Mixed Fence Example
+                slug: mixed-fence-example
+                tags: python
+                domain: example.hashnode.dev
+                ---
+
+                The code sample below includes a literal tilde fence marker:
+
+                ```md
+                ~~~
+                [[fill-me]]
+                ```
+
+                The placeholder token is inside the backtick-fenced code example.
                 """,
             )
 
