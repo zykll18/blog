@@ -12,13 +12,20 @@ ALWAYS_FAIL_PLACEHOLDER_LINE_PATTERN = re.compile(
 )
 TEMPLATE_PLACEHOLDER_LINE_PATTERN = re.compile(r"^\s*\{\{.+?\}\}\s*$", re.IGNORECASE)
 COMPACT_TEMPLATE_PLACEHOLDER_PATTERN = re.compile(r"^\s*\{\{[a-z0-9_-]+\}\}\s*$", re.IGNORECASE)
-SCAFFOLD_PREFIXES = ("replace with ",)
 SCAFFOLD_LINES = {
+    "replace with the article title",
+    "replace with a one-line supporting idea",
     "open with the core opinion in one or two sentences.",
     "explain the shift, mistake, or pattern you want to argue about.",
     "connect the opinion to engineering practice, team behavior, or product outcomes.",
     "surface the tension instead of pretending the answer is obvious.",
     "end with a clear position, not a summary that says nothing.",
+}
+TEMPLATE_FRONTMATTER_PLACEHOLDERS = {
+    "title": "replace with the article title",
+    "slug": "replace-with-the-article-slug",
+    "domain": "your-publication.hashnode.dev",
+    "subtitle": "replace with a one-line supporting idea",
 }
 
 
@@ -56,6 +63,8 @@ def validate_post_file(path: Path) -> list[str]:
     missing = [key for key in REQUIRED_KEYS if not frontmatter.get(key)]
     if missing:
         errors.extend(f"missing required frontmatter: {key}" for key in missing)
+
+    errors.extend(_validate_template_frontmatter(frontmatter))
 
     title = frontmatter.get("title", "")
     if title and len(title) > 100:
@@ -173,7 +182,18 @@ def _get_fence_marker(stripped_line: str) -> tuple[str, int] | None:
 
 def _is_scaffold_line(stripped_line: str) -> bool:
     normalized = stripped_line.lower()
-    return normalized.startswith(SCAFFOLD_PREFIXES) or normalized in SCAFFOLD_LINES
+    if normalized.startswith("#"):
+        normalized = normalized.lstrip("#").strip()
+    return normalized in SCAFFOLD_LINES
+
+
+def _validate_template_frontmatter(frontmatter: dict[str, str]) -> list[str]:
+    errors: list[str] = []
+    for key, placeholder in TEMPLATE_FRONTMATTER_PLACEHOLDERS.items():
+        value = frontmatter.get(key, "")
+        if value.lower() == placeholder:
+            errors.append(f"frontmatter contains template placeholder: {key}")
+    return errors
 
 
 def validate_repository(repo_root: Path) -> dict[Path, list[str]]:

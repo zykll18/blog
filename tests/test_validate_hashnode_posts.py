@@ -286,6 +286,57 @@ class ValidateHashnodePostsTests(unittest.TestCase):
 
             self.assertIn("body contains placeholder text", errors)
 
+    def test_template_metadata_placeholders_fail_even_with_real_body(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "template-metadata.md",
+                """
+                ---
+                title: Replace with the article title
+                slug: replace-with-the-article-slug
+                tags: python, testing
+                domain: your-publication.hashnode.dev
+                subtitle: Replace with a one-line supporting idea
+                ---
+
+                # A Real Body
+
+                This post body is otherwise complete and should only fail because
+                template metadata placeholders were left unchanged.
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertIn("frontmatter contains template placeholder: title", errors)
+            self.assertIn("frontmatter contains template placeholder: slug", errors)
+            self.assertIn("frontmatter contains template placeholder: domain", errors)
+
+    def test_legitimate_replace_with_prose_does_not_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "replace-with-prose.md",
+                """
+                ---
+                title: Replace With Advice
+                slug: replace-with-advice
+                tags: python
+                domain: example.hashnode.dev
+                ---
+
+                Replace with a small adapter only when the upstream contract is unstable.
+                That advice is part of the real article body, not a template scaffold.
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertEqual(errors, [])
+
     def test_inline_template_syntax_in_normal_body_does_not_fail(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
