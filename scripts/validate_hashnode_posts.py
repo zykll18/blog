@@ -121,7 +121,6 @@ def _is_valid_domain(domain: str) -> bool:
 
 def _contains_placeholder_line(body: str) -> bool:
     substantive_lines: list[str] = []
-    template_placeholder_lines: list[str] = []
     active_fence: tuple[str, int] | None = None
     in_indented_code_block = False
     previous_line_blank = True
@@ -155,14 +154,12 @@ def _contains_placeholder_line(body: str) -> bool:
         if _is_scaffold_line(stripped):
             return True
         if TEMPLATE_PLACEHOLDER_LINE_PATTERN.fullmatch(line):
-            if COMPACT_TEMPLATE_PLACEHOLDER_PATTERN.fullmatch(line):
-                return True
-            template_placeholder_lines.append(stripped)
+            return True
         else:
             substantive_lines.append(stripped)
         previous_line_blank = False
 
-    return bool(template_placeholder_lines) and not substantive_lines
+    return False
 
 
 def _has_unclosed_fenced_code_block(body: str) -> bool:

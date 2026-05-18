@@ -241,6 +241,32 @@ class ValidateHashnodePostsTests(unittest.TestCase):
 
             self.assertIn("body contains placeholder text", errors)
 
+    def test_prose_with_spaced_template_placeholder_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "spaced-template-draft.md",
+                """
+                ---
+                title: Spaced Template Draft
+                slug: spaced-template-draft
+                tags: python
+                domain: example.hashnode.dev
+                ---
+
+                Introductory prose for the draft.
+
+                {{ headline }}
+
+                Outro text that should not hide the draft marker.
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertIn("body contains placeholder text", errors)
+
     def test_unedited_opinion_template_scaffold_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
@@ -646,7 +672,7 @@ class ValidateHashnodePostsTests(unittest.TestCase):
             self.assertNotIn("body contains placeholder text", errors)
             self.assertEqual(errors, [])
 
-    def test_standalone_example_line_with_surrounding_explanation_does_not_fail(self) -> None:
+    def test_standalone_template_line_with_surrounding_explanation_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
             post = self.write_file(
@@ -670,8 +696,7 @@ class ValidateHashnodePostsTests(unittest.TestCase):
 
             errors = validate_post_file(post)
 
-            self.assertNotIn("body contains placeholder text", errors)
-            self.assertEqual(errors, [])
+            self.assertIn("body contains placeholder text", errors)
 
     def test_repository_validation_only_scans_root_markdown_files(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
