@@ -89,12 +89,16 @@ The repository should act as a content source repository, not as a full blog eng
 
 Planned structure:
 
-- `posts/` for Markdown posts synced to Hashnode
+- root-level `*.md` files for publishable Hashnode posts
 - `templates/` for reusable article templates
-- `scripts/` for helper utilities such as slug generation or validation
+- `scripts/` for helper utilities such as validation
 - `.github/workflows/` for validation-only workflows
 - `docs/` for process documents and operating rules
 - `README.md` for a concise explanation of how writing and publishing works
+
+Implementation note:
+
+- current Hashnode GitHub publishing expects Markdown posts in the repository root rather than a nested `posts/` directory
 
 ## Content Model
 
