@@ -215,6 +215,32 @@ class ValidateHashnodePostsTests(unittest.TestCase):
 
             self.assertIn("body contains placeholder text", errors)
 
+    def test_prose_with_compact_template_placeholder_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "compact-template-draft.md",
+                """
+                ---
+                title: Compact Template Draft
+                slug: compact-template-draft
+                tags: python
+                domain: example.hashnode.dev
+                ---
+
+                Introductory prose for the draft.
+
+                {{headline}}
+
+                Outro text that should not hide the draft marker.
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertIn("body contains placeholder text", errors)
+
     def test_inline_template_syntax_in_normal_body_does_not_fail(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
@@ -260,6 +286,36 @@ class ValidateHashnodePostsTests(unittest.TestCase):
                 ```
 
                 Continue with the explanation after the snippet.
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertNotIn("body contains placeholder text", errors)
+            self.assertEqual(errors, [])
+
+    def test_longer_backtick_fence_not_closed_by_shorter_backticks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "long-backtick-fence.md",
+                """
+                ---
+                title: Long Backtick Fence
+                slug: long-backtick-fence
+                tags: python
+                domain: example.hashnode.dev
+                ---
+
+                The code sample below uses four-backtick fences:
+
+                ````md
+                ```
+                [[fill-me]]
+                ````
+
+                The placeholder token is still inside the longer fenced code example.
                 """,
             )
 

@@ -11,6 +11,7 @@ ALWAYS_FAIL_PLACEHOLDER_LINE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 TEMPLATE_PLACEHOLDER_LINE_PATTERN = re.compile(r"^\s*\{\{.+?\}\}\s*$", re.IGNORECASE)
+COMPACT_TEMPLATE_PLACEHOLDER_PATTERN = re.compile(r"^\s*\{\{[a-z0-9_-]+\}\}\s*$", re.IGNORECASE)
 
 
 def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
@@ -101,14 +102,17 @@ def _is_valid_domain(domain: str) -> bool:
 def _contains_placeholder_line(body: str) -> bool:
     substantive_lines: list[str] = []
     template_placeholder_lines: list[str] = []
-    active_fence: str | None = None
+    active_fence: tuple[str, int] | None = None
     in_indented_code_block = False
     previous_line_blank = True
 
     for line in body.splitlines():
         stripped = line.strip()
         fence = _get_fence_marker(stripped)
-        if fence is not None and (active_fence is None or fence == active_fence):
+        if fence is not None and (
+            active_fence is None
+            or (fence[0] == active_fence[0] and fence[1] >= active_fence[1])
+        ):
             active_fence = None if active_fence == fence else fence
             in_indented_code_block = False
             previous_line_blank = False
@@ -127,6 +131,8 @@ def _contains_placeholder_line(body: str) -> bool:
         if ALWAYS_FAIL_PLACEHOLDER_LINE_PATTERN.fullmatch(line):
             return True
         if TEMPLATE_PLACEHOLDER_LINE_PATTERN.fullmatch(line):
+            if COMPACT_TEMPLATE_PLACEHOLDER_PATTERN.fullmatch(line):
+                return True
             template_placeholder_lines.append(stripped)
         else:
             substantive_lines.append(stripped)
@@ -145,11 +151,11 @@ def _is_indented_code_line(
     )
 
 
-def _get_fence_marker(stripped_line: str) -> str | None:
-    if stripped_line.startswith("```"):
-        return "```"
-    if stripped_line.startswith("~~~"):
-        return "~~~"
+def _get_fence_marker(stripped_line: str) -> tuple[str, int] | None:
+    for fence_char in ("`", "~"):
+        if stripped_line.startswith(fence_char * 3):
+            fence_length = len(stripped_line) - len(stripped_line.lstrip(fence_char))
+            return fence_char, fence_length
     return None
 
 
