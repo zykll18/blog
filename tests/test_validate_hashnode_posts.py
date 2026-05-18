@@ -241,6 +241,51 @@ class ValidateHashnodePostsTests(unittest.TestCase):
 
             self.assertIn("body contains placeholder text", errors)
 
+    def test_unedited_opinion_template_scaffold_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "template-copy.md",
+                """
+                ---
+                title: Replace with the article title
+                slug: replace-with-the-article-slug
+                tags: tag-one, tag-two
+                domain: example.hashnode.dev
+                subtitle: Replace with a one-line supporting idea
+                hideFromHashnodeCommunity: false
+                disableComments: false
+                saveAsDraft: true
+                enableToc: true
+                ---
+
+                # Replace with the article title
+
+                Open with the core opinion in one or two sentences.
+
+                ## What I think is happening
+
+                Explain the shift, mistake, or pattern you want to argue about.
+
+                ## Why that matters
+
+                Connect the opinion to engineering practice, team behavior, or product outcomes.
+
+                ## The trade-off people miss
+
+                Surface the tension instead of pretending the answer is obvious.
+
+                ## Where I land
+
+                End with a clear position, not a summary that says nothing.
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertIn("body contains placeholder text", errors)
+
     def test_inline_template_syntax_in_normal_body_does_not_fail(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)

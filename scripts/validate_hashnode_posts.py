@@ -12,6 +12,14 @@ ALWAYS_FAIL_PLACEHOLDER_LINE_PATTERN = re.compile(
 )
 TEMPLATE_PLACEHOLDER_LINE_PATTERN = re.compile(r"^\s*\{\{.+?\}\}\s*$", re.IGNORECASE)
 COMPACT_TEMPLATE_PLACEHOLDER_PATTERN = re.compile(r"^\s*\{\{[a-z0-9_-]+\}\}\s*$", re.IGNORECASE)
+SCAFFOLD_PREFIXES = ("replace with ",)
+SCAFFOLD_LINES = {
+    "open with the core opinion in one or two sentences.",
+    "explain the shift, mistake, or pattern you want to argue about.",
+    "connect the opinion to engineering practice, team behavior, or product outcomes.",
+    "surface the tension instead of pretending the answer is obvious.",
+    "end with a clear position, not a summary that says nothing.",
+}
 
 
 def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
@@ -132,6 +140,8 @@ def _contains_placeholder_line(body: str) -> bool:
             continue
         if ALWAYS_FAIL_PLACEHOLDER_LINE_PATTERN.fullmatch(line):
             return True
+        if _is_scaffold_line(stripped):
+            return True
         if TEMPLATE_PLACEHOLDER_LINE_PATTERN.fullmatch(line):
             if COMPACT_TEMPLATE_PLACEHOLDER_PATTERN.fullmatch(line):
                 return True
@@ -159,6 +169,11 @@ def _get_fence_marker(stripped_line: str) -> tuple[str, int] | None:
             fence_length = len(stripped_line) - len(stripped_line.lstrip(fence_char))
             return fence_char, fence_length
     return None
+
+
+def _is_scaffold_line(stripped_line: str) -> bool:
+    normalized = stripped_line.lower()
+    return normalized.startswith(SCAFFOLD_PREFIXES) or normalized in SCAFFOLD_LINES
 
 
 def validate_repository(repo_root: Path) -> dict[Path, list[str]]:
