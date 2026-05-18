@@ -31,6 +31,7 @@ TEMPLATE_FRONTMATTER_PLACEHOLDERS = {
 
 def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
     text = text.removeprefix("\ufeff")
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
 
     if not text.startswith("---\n"):
         raise ValueError("frontmatter must start the file")
@@ -251,6 +252,10 @@ def _is_true(value: str) -> bool:
 def validate_repository(repo_root: Path) -> dict[Path, list[str]]:
     results: dict[Path, list[str]] = {}
     for path in iter_root_markdown_files(repo_root):
+        raw_text = path.read_text(encoding="utf-8")
+        normalized = raw_text.removeprefix("\ufeff").replace("\r\n", "\n").replace("\r", "\n")
+        if not normalized.startswith("---\n"):
+            continue
         results[path] = validate_post_file(path)
     return results
 

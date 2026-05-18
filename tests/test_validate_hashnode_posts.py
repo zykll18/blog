@@ -63,6 +63,28 @@ class ValidateHashnodePostsTests(unittest.TestCase):
 
             self.assertEqual(errors, [])
 
+    def test_crlf_prefixed_valid_post_passes_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = repo / "crlf-valid-post.md"
+            post.write_text(
+                "---\r\n"
+                "title: CRLF Valid Title\r\n"
+                "slug: crlf-valid-title\r\n"
+                "tags: python, testing\r\n"
+                "domain: example.hashnode.dev\r\n"
+                "---\r\n"
+                "\r\n"
+                "# CRLF Valid Title\r\n"
+                "\r\n"
+                "This is a finished post body.\r\n",
+                encoding="utf-8",
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertEqual(errors, [])
+
     def test_missing_required_frontmatter_fails(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
@@ -368,41 +390,11 @@ class ValidateHashnodePostsTests(unittest.TestCase):
             self.assertIn("frontmatter contains template placeholder: domain", errors)
 
     def test_ignore_post_fixture_with_placeholder_domain_passes(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            repo = Path(tmp)
-            post = self.write_file(
-                repo,
-                "ignored-sample.md",
-                """
-                ---
-                title: Sample Opinion Post
-                slug: sample-opinion-post
-                tags: engineering, writing
-                domain: your-publication.hashnode.dev
-                subtitle: A safe root-level sample for validator and integration checks
-                ignorePost: true
-                hideFromHashnodeCommunity: true
-                disableComments: false
-                enableToc: true
-                ---
+        fixture = Path(__file__).resolve().parent.parent / "sample-opinion-post.md"
 
-                # Sample Opinion Post
+        errors = validate_post_file(fixture)
 
-                This file is intentionally ignored by Hashnode publishing.
-
-                ## Why it exists
-
-                It proves that root-level article files are shaped correctly for the validator and the GitHub integration.
-
-                ## How to use it
-
-                Replace it with a real article or keep it as a validator fixture. Leave `ignorePost: true` in place unless you intentionally want it published.
-                """,
-            )
-
-            errors = validate_post_file(post)
-
-            self.assertEqual(errors, [])
+        self.assertEqual(errors, [])
 
     def test_legitimate_replace_with_prose_does_not_fail(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -783,6 +775,7 @@ class ValidateHashnodePostsTests(unittest.TestCase):
             nested.mkdir()
             self.write_file(nested, "ignored.md", "# Not a post")
             self.write_file(repo, "README.md", "# Root readme")
+            self.write_file(repo, "CHANGELOG.md", "# Changelog")
 
             results = validate_repository(repo)
 
