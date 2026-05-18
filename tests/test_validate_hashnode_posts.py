@@ -154,6 +154,58 @@ class ValidateHashnodePostsTests(unittest.TestCase):
 
                 self.assertIn("body contains placeholder text", errors)
 
+    def test_prose_with_fill_me_placeholder_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "fill-me-draft.md",
+                """
+                ---
+                title: Fill Me Draft
+                slug: fill-me-draft
+                tags: python
+                domain: example.hashnode.dev
+                ---
+
+                Introductory prose for the draft.
+
+                [[fill-me]]
+
+                Closing note that the draft is not done yet.
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertIn("body contains placeholder text", errors)
+
+    def test_prose_with_replace_placeholder_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "replace-draft.md",
+                """
+                ---
+                title: Replace Draft
+                slug: replace-draft
+                tags: python
+                domain: example.hashnode.dev
+                ---
+
+                This article still needs a full walkthrough.
+
+                <replace-body>
+
+                The introduction and conclusion have already been outlined.
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertIn("body contains placeholder text", errors)
+
     def test_inline_template_syntax_in_normal_body_does_not_fail(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)

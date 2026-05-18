@@ -6,10 +6,11 @@ REQUIRED_KEYS = ("title", "slug", "tags", "domain")
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 TAG_PATTERN = re.compile(r"^[a-z0-9-]+$")
 HOSTNAME_LABEL_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
-PLACEHOLDER_LINE_PATTERN = re.compile(
-    r"^\s*(?:\[\[fill-me\]\]|\{\{.+?\}\}|<replace.+?>)\s*$",
+ALWAYS_FAIL_PLACEHOLDER_LINE_PATTERN = re.compile(
+    r"^\s*(?:\[\[fill-me\]\]|<replace.+?>)\s*$",
     re.IGNORECASE,
 )
+TEMPLATE_PLACEHOLDER_LINE_PATTERN = re.compile(r"^\s*\{\{.+?\}\}\s*$", re.IGNORECASE)
 
 
 def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
@@ -93,7 +94,7 @@ def _is_valid_domain(domain: str) -> bool:
 
 def _contains_placeholder_line(body: str) -> bool:
     substantive_lines: list[str] = []
-    placeholder_lines: list[str] = []
+    template_placeholder_lines: list[str] = []
     in_fenced_code_block = False
 
     for line in body.splitlines():
@@ -103,12 +104,14 @@ def _contains_placeholder_line(body: str) -> bool:
             continue
         if in_fenced_code_block or not stripped:
             continue
-        if PLACEHOLDER_LINE_PATTERN.fullmatch(line):
-            placeholder_lines.append(stripped)
+        if ALWAYS_FAIL_PLACEHOLDER_LINE_PATTERN.fullmatch(line):
+            return True
+        if TEMPLATE_PLACEHOLDER_LINE_PATTERN.fullmatch(line):
+            template_placeholder_lines.append(stripped)
         else:
             substantive_lines.append(stripped)
 
-    return bool(placeholder_lines) and not substantive_lines
+    return bool(template_placeholder_lines) and not substantive_lines
 
 
 def validate_repository(repo_root: Path) -> dict[Path, list[str]]:
