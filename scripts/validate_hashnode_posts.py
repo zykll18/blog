@@ -96,13 +96,22 @@ def _contains_placeholder_line(body: str) -> bool:
     substantive_lines: list[str] = []
     template_placeholder_lines: list[str] = []
     in_fenced_code_block = False
+    previous_line_blank = True
 
     for line in body.splitlines():
         stripped = line.strip()
         if stripped.startswith("```"):
             in_fenced_code_block = not in_fenced_code_block
+            previous_line_blank = False
             continue
-        if in_fenced_code_block or not stripped:
+        if in_fenced_code_block:
+            previous_line_blank = not stripped
+            continue
+        if _is_indented_code_line(line, previous_line_blank):
+            previous_line_blank = False
+            continue
+        if not stripped:
+            previous_line_blank = True
             continue
         if ALWAYS_FAIL_PLACEHOLDER_LINE_PATTERN.fullmatch(line):
             return True
@@ -110,8 +119,13 @@ def _contains_placeholder_line(body: str) -> bool:
             template_placeholder_lines.append(stripped)
         else:
             substantive_lines.append(stripped)
+        previous_line_blank = False
 
     return bool(template_placeholder_lines) and not substantive_lines
+
+
+def _is_indented_code_line(line: str, previous_line_blank: bool) -> bool:
+    return previous_line_blank and (line.startswith("    ") or line.startswith("\t"))
 
 
 def validate_repository(repo_root: Path) -> dict[Path, list[str]]:

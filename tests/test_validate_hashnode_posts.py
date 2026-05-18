@@ -259,6 +259,34 @@ class ValidateHashnodePostsTests(unittest.TestCase):
             self.assertNotIn("body contains placeholder text", errors)
             self.assertEqual(errors, [])
 
+    def test_indented_code_block_with_placeholder_tokens_does_not_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "indented-code-example.md",
+                """
+                ---
+                title: Indented Code Example
+                slug: indented-code-example
+                tags: python
+                domain: example.hashnode.dev
+                ---
+
+                The following indented example shows draft-like tokens as literals:
+
+                    [[fill-me]]
+                    {{ user.name }}
+
+                These lines are example code, not unfinished article content.
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertNotIn("body contains placeholder text", errors)
+            self.assertEqual(errors, [])
+
     def test_standalone_example_line_with_surrounding_explanation_does_not_fail(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
