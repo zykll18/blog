@@ -6,6 +6,7 @@ domain: your-publication.hashnode.dev
 subtitle: Replace with a one-line supporting idea
 hideFromHashnodeCommunity: false
 disableComments: false
+saveAsDraft: true
 enableToc: true
 ---
 

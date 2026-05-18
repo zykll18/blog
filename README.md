@@ -11,7 +11,7 @@ This repository is the source of truth for blog posts published to Hashnode thro
 5. After that release command, the assistant validates the article and pushes it to GitHub.
 6. Hashnode syncs the root-level article file and publishes it.
 
-## Repository layout
+## Target repository layout
 
 - root-level `*.md`: publishable posts
 - `templates/`: reusable writing templates
@@ -36,7 +36,7 @@ These phrases do not allow publishing:
 
 ## Local validation
 
-Run:
+When the validator tooling is present, run:
 
 ```bash
 python3 -m unittest -v
