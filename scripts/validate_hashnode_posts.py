@@ -131,7 +131,7 @@ def _contains_placeholder_line(body: str) -> bool:
             in_indented_code_block = False
             previous_line_blank = False
             continue
-        if active_fence is not None and fence is not None and fence[0] == active_fence[0] and fence[1] >= active_fence[1]:
+        if active_fence is not None and _is_closing_fence(stripped, active_fence):
             active_fence = None
             in_indented_code_block = False
             previous_line_blank = False
@@ -178,6 +178,19 @@ def _get_fence_marker(stripped_line: str) -> tuple[str, int] | None:
             fence_length = len(stripped_line) - len(stripped_line.lstrip(fence_char))
             return fence_char, fence_length
     return None
+
+
+def _is_closing_fence(stripped_line: str, active_fence: tuple[str, int]) -> bool:
+    fence = _get_fence_marker(stripped_line)
+    if fence is None:
+        return False
+
+    marker, length = fence
+    if marker != active_fence[0] or length < active_fence[1]:
+        return False
+
+    trailing = stripped_line[length:]
+    return not trailing.strip()
 
 
 def _is_scaffold_line(stripped_line: str) -> bool:

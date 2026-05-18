@@ -448,6 +448,36 @@ class ValidateHashnodePostsTests(unittest.TestCase):
 
             self.assertIn("body contains placeholder text", errors)
 
+    def test_fenced_block_with_trailing_info_string_does_not_close_outer_block(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "fence-info-string-inside-code.md",
+                """
+                ---
+                title: Fence Info String Inside Code
+                slug: fence-info-string-inside-code
+                tags: python
+                domain: example.hashnode.dev
+                ---
+
+                The outer fenced block contains a literal inner opener line:
+
+                ```md
+                ```python
+                [[fill-me]]
+                ```
+
+                The placeholder token remains inside the outer fenced code example.
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertNotIn("body contains placeholder text", errors)
+            self.assertEqual(errors, [])
+
     def test_backtick_fenced_block_with_literal_tilde_fence_does_not_fail(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
