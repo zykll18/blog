@@ -128,6 +128,10 @@ def _contains_placeholder_line(body: str) -> bool:
 
     for line in body.splitlines():
         stripped = line.strip()
+        if active_fence is None and _is_indented_code_line(line, previous_line_blank, in_indented_code_block):
+            in_indented_code_block = True
+            previous_line_blank = False
+            continue
         fence = _get_fence_marker(stripped)
         if active_fence is None and fence is not None:
             active_fence = fence
@@ -141,10 +145,6 @@ def _contains_placeholder_line(body: str) -> bool:
             continue
         if active_fence is not None:
             previous_line_blank = not stripped
-            continue
-        if _is_indented_code_line(line, previous_line_blank, in_indented_code_block):
-            in_indented_code_block = True
-            previous_line_blank = False
             continue
         in_indented_code_block = False
         if not stripped:
@@ -167,15 +167,30 @@ def _contains_placeholder_line(body: str) -> bool:
 
 def _has_unclosed_fenced_code_block(body: str) -> bool:
     active_fence: tuple[str, int] | None = None
+    in_indented_code_block = False
+    previous_line_blank = True
 
     for line in body.splitlines():
         stripped = line.strip()
+        if active_fence is None and _is_indented_code_line(line, previous_line_blank, in_indented_code_block):
+            in_indented_code_block = True
+            previous_line_blank = False
+            continue
         fence = _get_fence_marker(stripped)
         if active_fence is None and fence is not None:
             active_fence = fence
+            in_indented_code_block = False
+            previous_line_blank = False
             continue
         if active_fence is not None and _is_closing_fence(stripped, active_fence):
             active_fence = None
+            previous_line_blank = False
+            continue
+        if active_fence is None:
+            in_indented_code_block = False
+            previous_line_blank = not stripped
+        else:
+            previous_line_blank = not stripped
 
     return active_fence is not None
 

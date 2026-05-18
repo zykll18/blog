@@ -563,6 +563,33 @@ class ValidateHashnodePostsTests(unittest.TestCase):
             self.assertNotIn("body contains placeholder text", errors)
             self.assertEqual(errors, [])
 
+    def test_indented_code_block_with_literal_fence_opener_does_not_start_real_fence(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            post = self.write_file(
+                repo,
+                "indented-fence-literal.md",
+                """
+                ---
+                title: Indented Fence Literal
+                slug: indented-fence-literal
+                tags: python
+                domain: example.hashnode.dev
+                ---
+
+                The example below shows a literal fenced opener inside indented code:
+
+                    ```python
+                    print("hello")
+
+                The prose after the example is valid and complete.
+                """,
+            )
+
+            errors = validate_post_file(post)
+
+            self.assertEqual(errors, [])
+
     def test_indented_code_block_with_placeholder_tokens_does_not_fail(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             repo = Path(tmp)
